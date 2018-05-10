@@ -1,0 +1,98 @@
+version: "3.3"
+services:
+ nginx: # sudo docker exec -it <container id> sh # cat /etc/nginx/conf.d/default.conf
+   container_name: nginx_fpm
+   image: richarvey/nginx-php-fpm:latest
+   restart: always
+   ports:
+    - "8080:80"
+   networks:
+    - webnet
+   configs:
+    - nginx_config
+   volumes:
+     - type: bind # тип привязки статики с диска
+       source: ./logs # своя папка относительно запускаемого docker-compose.yml
+       target: /etc/logs/nginx
+       volume:
+        nocopy: true
+     - type: bind
+       source: ./php-code/html/static
+       target: /var/www/html/static
+     - type: bind
+       source: ./contaners/nginx/conf
+       target: /etc/nginx/sites-available/
+     - type: bind
+       source: ./php-code
+       target: /var/www
+       volume:
+        nocopy: false
+ mysql:
+   container_name: mysql
+   restart: always
+   networks:
+    - webnet
+   image: mariadb:latest
+   ports:
+    - "3307:3306"
+   environment:
+    - MYSQL_ROOT_PASSWORD=adminpassword # sudo docker exec -it mysql mysql -uroot -padminpassword
+    - MYSQL_DATABASE=dbname
+    - MYSQL_USER=username
+    - MYSQL_PASSWORD=userpassword
+   volumes:
+    - type: volume # тип привязки контейнера данных,хранятся в контейнере при запуске могут восстановится  nocopy  false
+      source: mysql_data
+      target: /var/lib/mysql
+      volume:
+       nocopy: false
+ postgres:
+  container_name: postgres 
+  image: postgres:latest
+  restart: always
+  ports:
+   - 5433:5432
+  volumes:
+   - type: volume
+     source: pg_data
+     target: /var/lib/postgresql/data/pgdata
+     volume:
+      nocopy: false
+  environment:
+   POSTGRES_PASSWORD: postgres
+   POSTGRES_USER: postgres
+   PGDATA : /var/lib/postgresql/data/pgdata
+ mongodb:
+  container_name: mongodb
+  image: 'bitnami/mongodb:latest'
+  restart: always
+  container_name: "mongodb"
+  environment: # sudo docker exec -it 92bbcbae7e7b  mongo admin # use my_database # db.auth("my_user","password123");
+   - MONGODB_USERNAME=my_user
+   - MONGODB_PASSWORD=password123
+   - MONGODB_DATABASE=my_database
+  volumes:
+   - type: volume
+     source: mongo_data
+     target: /data/db
+     volume:
+      nocopy: false
+  ports:
+   - 27017:27017
+networks:
+ webnet:
+configs:
+ nginx_config:
+   external:
+    name: ./contaners/nginx/conf/default.conf
+volumes:
+ mysql_data:
+ pg_data:
+ mongo_data:
+
+
+
+
+
+
+ 

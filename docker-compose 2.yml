@@ -1,0 +1,71 @@
+nginx:
+ dockerfile: ./Dockerfile # путь до докер файла указываем относительно директории в build
+ build: ./contaners/nginx
+ ports:
+  - 8080:80
+ volumes:
+  - ./logs:/etc/logs/nginx
+ volumes_from:
+  - fpm:rw
+ environment:
+  - NGINX_HOST=localhost
+  - NGINX_PORT=80
+ command: nginx -g "daemon off;" # Можно было указать в докер-фале, но можно и здесь)
+ links:
+  - fpm
+fpm:
+ dockerfile: ./Dockerfile
+ build: ./contaners/fpm
+ volumes:
+  - ./php-code:/var/www:rw
+mongo:
+ image: mongo
+ ports:
+  - 27017:27017 # Проброс портов для внешнего доступа 
+ volumes:
+ - ./database/mongo:/data/db
+postgres:
+  image: postgres:latest
+  ports:
+    - 5433:5432
+  volumes_from:
+    - pg_data
+  environment:
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_USER: postgres
+    PGDATA : /var/lib/postgresql/data/pgdata
+pg_data:
+  image: alpine:latest
+  volumes:
+    - /var/lib/postgresql/data/pgdata
+  command: "true"
+mongodb:
+ image: 'bitnami/mongodb:latest'
+ container_name: "mongodb"
+ environment: # sudo docker exec -it 92bbcbae7e7b  mongo admin # use my_database # db.auth("my_user","password123");
+  - MONGODB_USERNAME=my_user
+  - MONGODB_PASSWORD=password123
+  - MONGODB_DATABASE=my_database
+ volumes:
+  - ./data/db:/data/db
+ volumes_from:
+    - mongo_data
+ ports:
+  - 27018:27017
+mongo_data:
+  image: alpine:latest
+  volumes:
+    - /data/db
+  command: "true"
+mysql:
+ image: mariadb:latest
+ ports:
+  - "3307:3306"
+ container_name: mysql # Пропишем настройки, предлагаю использовать вместо mypassword более сложный пароль, он пренадлежит root
+ environment:
+  - MYSQL_ROOT_PASSWORD=adminpassword # sudo docker exec -it mysql mysql -uroot -padminpassword
+  - MYSQL_DATABASE=dbname
+  - MYSQL_USER=username
+  - MYSQL_PASSWORD=userpassword
+ volumes:
+  - ./database/mysql:/var/lib/mysql
