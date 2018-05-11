@@ -1,6 +1,13 @@
 # docker-serv<br>
 nginx,php-fpm,mariadb,mongo,postgres
 
+v1:
+cd empty folder
+$start.sh
+
+or
+
+v2:
 start serv<br>
 $ docker-compose up -d<br>
 info container and image<br>
